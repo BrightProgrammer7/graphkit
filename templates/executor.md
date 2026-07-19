@@ -44,6 +44,10 @@ Execution philosophy: implement first, verify immediately — within one round, 
 3. Run gates: {{GATE_COMMANDS — exact per-repo commands, e.g. `make lint && make test` / `mvn -s <settings> -pl <mod> test` / `pnpm build && tsc --noEmit`}}. If a gate is red, the next round may only fix the gate.
 4. **Every {{CONVERGE_EVERY|default 5}}th round is a forced convergence round**: zero new features — only delete dead code, merge duplication, tighten interfaces; net lines ≤ 0.
 
+## Expensive runs: pilot first
+
+Any full-cohort / bulk operation — eval over the whole set, bulk VLM/API sweep, a migration — runs a **smallest-slice pilot first** (a handful of items), and goes full only after the pilot is verified clean. Full-run-first with no pilot is a wasteful-method violation the supervisor will correct.
+
 ## Anti-bloat hard rules
 
 - Before adding any endpoint / module / protocol / config / thread pool / cache, register its **real consumer** in the ledger. No consumer → don't build it.
@@ -59,7 +63,7 @@ Any gap discovered mid-round goes into the ledger's **debt register** with a pri
 ## Stop & escalate
 
 - **Normal stop**: current milestone's exit conditions all closed → write a promotion request in the ledger, stop for {{OWNER|the owner}}'s sign-off; don't self-advance {{MILESTONE_BOUNDARY_NOTE|default: unless the ledger authorizes boundary auto-pass}}.
-- **Blocked**: {{OWNER_DECISION_ITEMS — e.g. DDL, freezing a contract, credentials/data/remote env, lowering a metric bar}} → log under `owner-blocked` and do another item; if all remaining items are blocked, stop with an escalation report.
+- **Blocked**: {{OWNER_DECISION_ITEMS — e.g. DDL, freezing a contract, credentials/data/remote env, lowering a metric bar}} → log under `owner-blocked` and do another item. The supervisor adjudicates anything within its authority via the directives file — check it before treating an item as stuck; if all remaining items are blocked, stop with an escalation report.
 - **Stall guard**: two consecutive rounds with no change to the gate scoreboard or metric snapshot → stop, output a stall diagnosis, don't spin.
 
 ## Red lines (violate → stop immediately)

@@ -41,7 +41,7 @@ The nodes talk only through inspectable state — a ledger, a git tree, a one-wa
 - 🧹 **Forced convergence.** Every 5th round adds zero features — only deletes dead code and tightens interfaces (net lines ≤ 0). A round that adds >400 net lines forces the next to converge.
 - 📌 **Register-then-defer.** Every gap found mid-round is *logged*, never silently patched, never ignored.
 - 🚧 **Red lines that halt the run.** No push without authorization, no destructive git on others' work, no secrets in commits, frozen contracts stay frozen, metrics only go up.
-- 🛰️ **Clean-context supervisor.** A scheduled node checkpoint-commits clean work and corrects drift **through a one-way directives file — never by editing the ledger the executor is writing, and never by sharing its context.**
+- 🛰️ **Clean-context supervisor.** A scheduled node checkpoint-commits clean work and corrects drift — and wasteful method, like a full-cohort run with no pilot — **through a one-way directives file — never by editing the ledger the executor is writing, and never by sharing its context.** It decides by default: only a short owner-only list ever escalates to you, so the run doesn't stall waiting for a human.
 
 > **Graph-structured agents without a framework.** No LangGraph, no Python runtime, no orchestration server — the nodes and edges are plain Markdown files a coding agent already understands.
 

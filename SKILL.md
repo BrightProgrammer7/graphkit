@@ -69,7 +69,7 @@ Interview in the user's language and mirror it in the prose inside the artifacts
 4. **Gates** — the exact per-repo verify commands (test/lint/build); capture special flags for `ops.md`.
 5. **Red lines** — halt-the-run non-negotiables: no unauthorized push, no destructive git on others' work, no secrets/real data in code/logs/commits, frozen contracts, metrics-only-up.
 6. **Commit authorization** — may the executor commit? push? (Default: executor implements+verifies; commit is a separate authorized step.)
-7. **Supervisor?** — want the scheduled clean-context supervisor? interval (default 30 min)?
+7. **Supervisor?** — want the scheduled clean-context supervisor? interval (default 30 min)? Fix the **owner-only decision list** (typical: DDL/schema, credentials / remote env / real-data exposure, spend beyond budget, lowering a metric bar, frozen contracts, push) — everything off that list the supervisor adjudicates itself so the run never stalls waiting for the owner.
 
 Decide from context what you reasonably can and state the assumption; anything genuinely the user's call (data policy, DB access, lowering a bar) becomes a red line or an `owner-blocked` item — never silent.
 
@@ -81,8 +81,8 @@ Decide from context what you reasonably can and state the assumption; anything g
 
 - reads only durable state (ledger + `git status`), never the executor's context;
 - checkpoint-commits clean, gate-green, complete work (never half-written), local-only unless push is authorized;
-- corrects drift **only** by appending to `directives.md`; never edits the ledger;
-- escalates must-decide gaps to the human.
+- corrects drift **and wasteful method** (e.g. orders a smallest-slice pilot before a full-cohort burn) **only** by appending to `directives.md`; never edits the ledger;
+- **decides by default**: adjudicates anything off the owner-only list itself (directive + one-line rationale for retro-review) and sweeps `owner-blocked` each tick for items it can unblock; escalates only genuine owner-only calls.
 
 ## The rules that make it work (encoded in the templates)
 
@@ -91,9 +91,10 @@ Decide from context what you reasonably can and state the assumption; anything g
 - **Forced convergence.** Every Nth round (default 5th) adds zero features — only delete dead code, merge duplication, tighten interfaces; net lines ≤ 0. A round adding > ~400 net production lines forces the next to converge.
 - **Register-then-defer.** A gap found mid-round goes into the ledger's debt register by priority — never silently patched on the side, never dropped.
 - **No speculative building.** New endpoint/module/abstraction/pool needs a named real consumer in the ledger first. No compat double-paths, v1/v2 coexistence, or parallel error systems.
+- **Pilot before full batch.** Expensive full-cohort operations (whole-set evals, bulk VLM/API sweeps, migrations) run a smallest-slice pilot first; full run only after the pilot verifies clean.
 - **Honest measurement.** A metric counts only on the real, declared eval set (the frozen holdout in the ledger). Numbers from synthetic/self-generated inputs or a cherry-picked subset aren't progress and are never recorded — benchmark-gaming the clean-context supervisor must catch. Evidence artifacts (scorecards, eval reports) land at versioned persistent paths — the run directory or the repo, never scratch/tmp; a number whose artifact has vanished is struck and re-measured.
 - **Stop conditions.** Milestone all-green → promotion request, stop for sign-off. All remaining items blocked → stop, escalate. Two rounds with no ledger/metric change → stop, stall diagnosis. Red line violated → stop immediately.
-- **Clean-context separation.** The supervisor is a different node with a fresh context: steers via the directives edge, commits on authorization, escalates human-only calls — never merges into the executor's context or writes its ledger.
+- **Clean-context separation, delegated authority.** The supervisor is a different node with a fresh context: steers via the directives edge, commits on authorization, and **decides everything off the owner-only list itself** (logged rationale, retro-reviewable) — escalating only genuine owner-only calls; never merges into the executor's context or writes its ledger.
 
 ## Files in this skill
 

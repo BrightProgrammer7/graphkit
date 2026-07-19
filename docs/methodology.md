@@ -24,7 +24,7 @@ Rules 1–7 keep the *executor* honest within a round. Rule 8 — clean-context 
 
 **Rule:** each round picks the single smallest unclosed item, implements it, verifies it with the narrowest test/gate/smoke, and records the result — all in one round.
 
-**Prevents:** *batching debt and fake progress.* Batching hides which change broke a gate. "I'll test later" becomes "never". Verifying in the same round means "done" always means "verified to closure", not "written".
+**Prevents:** *batching debt and fake progress.* Batching hides which change broke a gate. "I'll test later" becomes "never". Verifying in the same round means "done" always means "verified to closure", not "written". The same instinct scales up: an expensive full-cohort operation (whole-set eval, bulk VLM/API sweep, migration) gets a **smallest-slice pilot first** — validate on a handful of items, then go wide; burning the full set to discover a config bug is the batch-debt failure at cohort scale.
 
 ## 3. Forced convergence rounds
 
@@ -63,9 +63,9 @@ And one way to stop hard: **any red-line violation halts the run immediately.**
 
 ## 8. Clean-context supervisor separation
 
-**Rule:** the supervisor is a **different node with a fresh context**, spun up each tick. It reads only durable state (ledger + git), checkpoint-commits authorized clean work, and corrects drift **only through the directives file the executor reads** — never by editing the ledger the executor is actively writing, never by joining the executor's context.
+**Rule:** the supervisor is a **different node with a fresh context**, spun up each tick. It reads only durable state (ledger + git), checkpoint-commits authorized clean work, and corrects drift **only through the directives file the executor reads** — never by editing the ledger the executor is actively writing, never by joining the executor's context. And it is a **decider, not just a watchdog**: it corrects wasteful *method* as well as violations (a full-cohort burn with no pilot is a correction even though it breaks no rule), and it adjudicates every call **off the owner-only list** itself — directive plus a one-line rationale the owner can retro-review — escalating only the short list of genuinely human calls.
 
-**Prevents:** *self-blind drift and write contention.* A same-context agent can't catch the drift its own context caused; a clean-context reviewer can, because it wasn't there when the corner was cut. And two agents editing the same scoreboard corrupt it — so the directives file is a strict one-way edge: supervisor writes, executor reads. Checkpoint commits are the supervisor's job precisely because commit authorization is a red line for the executor. This node separation is the load-bearing difference between a graph and a loop.
+**Prevents:** *self-blind drift, write contention — and escalation stalls.* A same-context agent can't catch the drift its own context caused; a clean-context reviewer can, because it wasn't there when the corner was cut. Two agents editing the same scoreboard corrupt it — so the directives file is a strict one-way edge: supervisor writes, executor reads. Checkpoint commits are the supervisor's job precisely because commit authorization is a red line for the executor. And a supervisor that only watches and escalates leaves the run idling for hours on calls a competent reviewer could make — delegated authority with a logged rationale keeps the run moving while keeping the owner able to overrule after the fact. This node separation is the load-bearing difference between a graph and a loop.
 
 ## 9. One run, one directory
 
