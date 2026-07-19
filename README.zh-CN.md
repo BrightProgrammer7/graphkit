@@ -60,11 +60,13 @@ flowchart LR
 
 ## 快速开始
 
-1. **安装技能**（克隆进 Claude Code 技能目录）：
+1. **安装技能** —— 一行搞定：
 
    ```bash
-   git clone https://github.com/levi-qiao/loop-skill ~/.claude/skills/loopkit
+   curl -fsSL https://raw.githubusercontent.com/levi-qiao/loop-skill/main/install.sh | sh
    ```
+
+   <sub>想手动？`git clone https://github.com/levi-qiao/loop-skill ~/.claude/skills/loopkit`</sub>
 
 2. **在 Claude Code 里调用**：
 
