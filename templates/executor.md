@@ -44,6 +44,12 @@ Execution philosophy: implement first, verify immediately — within one round, 
 3. Run gates: {{GATE_COMMANDS — exact per-repo commands, e.g. `make lint && make test` / `mvn -s <settings> -pl <mod> test` / `pnpm build && tsc --noEmit`}}. If a gate is red, the next round may only fix the gate.
 4. **Every {{CONVERGE_EVERY|default 5}}th round is a forced convergence round**: zero new features — only delete dead code, merge duplication, tighten interfaces; net lines ≤ 0.
 
+## Run continuously — don't stop between rounds
+
+Close a round → update the ledger → **start the next round immediately**. Do not pause to ask "shall I continue?"; asking between rounds is not a stop condition, it's over-stopping. Keep running until a **specific** stop condition below fires (milestone exit-ready / all items blocked / two rounds no change / red line). If the host ends the turn anyway, resume from the ledger when re-invoked — same rule, no permission needed.
+
+If the host exposes a long-running goal with a done/complete signal, mark it **complete only** when the ledger holds a promotion request or run status `exit-ready`. Gates green with milestone items still open is **not** complete. The goal's progress UI mirrors the ledger; it is never a second scoreboard, and the ledger wins conflicts. Don't write `directives.md` or act as the supervisor from this session.
+
 ## Expensive runs: pilot first
 
 Any full-cohort / bulk operation — eval over the whole set, bulk VLM/API sweep, a migration — runs a **smallest-slice pilot first** (a handful of items), and goes full only after the pilot is verified clean. Full-run-first with no pilot is a wasteful-method violation the supervisor will correct.
