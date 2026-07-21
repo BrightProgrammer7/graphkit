@@ -15,6 +15,7 @@ forward in the "Starting snapshot" below.
 
 Current milestone: {{M1 or "single goal"}} | Round: 0 (starts at 1) | Last round net lines: —
 Smallest unclosed item: {{FIRST_ITEM}}
+Convergence: fires at {{CONVERGE_EVERY|5}} rounds since last **or** +{{NET_LINE_CAP|400}} net lines, whichever first | since last: 0 rounds / +0 net | **next round converges: no**
 Run status: `active`   <!-- active | paused | exit-ready | stalled | closed. A terminal status (exit-ready/stalled/closed) is the signal for both loops to stop themselves. -->
 
 ---

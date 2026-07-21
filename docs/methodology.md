@@ -28,9 +28,9 @@ Rules 1–7 keep the *executor* honest within a round. Rule 8 — clean-context 
 
 ## 3. Forced convergence rounds
 
-**Rule:** every Nth round (default 5) does zero new features — only deletion, de-duplication, interface tightening; net lines ≤ 0. A single round adding more than the net-line cap (default 400) forces the next round to converge.
+**Rule:** a convergence round does zero new features — only deletion, de-duplication, interface tightening; net lines ≤ 0. It fires on whichever comes **first**: N rounds since the last convergence (default 5) or accumulated net production lines over the cap (default 400). The trigger is **explicit durable state, not a recomputed count**: the ledger's status header carries a convergence tracker — rounds-since, net-lines-since, and a `next round converges` flag — that the executor updates each round and resets after converging.
 
-**Prevents:** *monotonic growth.* Agents add far more readily than they remove. Without a periodic forcing function, the codebase only grows, and complexity compounds until the run can no longer reason about it. Convergence rounds are where the run pays down what it borrowed.
+**Prevents:** *monotonic growth — and a forcing function that silently never fires.* Agents add far more readily than they remove; without a periodic forcing function the codebase only grows until the run can no longer reason about it. But a forcing function keyed to "every 5th round" is unreliable when each round is a fresh, stateless context: the executor has to remember the rule and recompute `round mod 5` every time, and a cheap/fast model focused on its item routinely skips it — so the convergence round that was supposed to fire just doesn't. Making the trigger a flag in the one scoreboard (checked first thing each round) *and* keying it to real accumulated bloat, not only a blind count, is what makes convergence actually happen — and the clean-context supervisor audits that a flagged convergence round truly converged.
 
 ## 4. Register-then-defer
 
