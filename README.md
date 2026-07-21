@@ -93,7 +93,7 @@ A *node* is a role — executor, supervisor. A *host* is only what keeps a node 
 - **Keep the ledger a live file, not host text.** Hand the host the executor prompt, but the ledger and directives stay files the node re-reads each round — never folded into the host's own goal/prompt text, where they go stale. A host's progress UI (a goal's done-bar) *mirrors* the ledger; it never replaces it, and the ledger wins every conflict.
 - **The supervisor is always its own host, in a fresh context** — a separate session or a cron tick, never a subagent inside the executor's session. That subagent would share the context the whole method keeps clean.
 
-So a cheap executor on one host and a strong supervisor on another is a first-class setup, not a special integration.
+So a cheap executor on one host and a strong supervisor on another is a first-class setup, not a special integration. Launch snippets live in [`templates/hosts/`](templates/hosts/), split by what the runtime gives you: **goal-based** hosts run a task to completion with a done signal (Grok `/goal`, Codex delegated task); **loop-based** hosts re-invoke each round and the node resumes from the ledger (Cursor background agent, Claude Code `/loop`+cron, a shell `while`). Either way the launcher is a thin pointer at the run files, so the node re-reads live files instead of drifting from a pasted prompt. Each run's generated `LAUNCH.md` fills the right snippet in with real paths.
 
 ## Quickstart
 
@@ -107,9 +107,9 @@ So a cheap executor on one host and a strong supervisor on another is a first-cl
 
 2. **Run `/graphkit` in Claude Code** and answer the interview: repos and branches, the goal and how it is verified, milestones, gate commands, red lines, commit authorization, supervisor interval. The files land in a fresh `.graphkit/<date-slug>/` directory in your repo — one directory per run; a new run never edits an old run's files. ([What each file does →](#files-generated-per-run))
 
-3. **Start the executor:** paste the generated `executor.md` into a fresh agent context. Re-run it each round however you like — cron, a shell loop, or by hand.
+3. **Start the executor** on its host, using the snippet in the generated `LAUNCH.md`. On a goal host (Grok, Codex) it's a thin launcher that runs round after round to completion; on a loop host (Cursor, Claude Code, a shell) an external loop re-invokes it each round. Either way it resumes from the ledger if the session dies, rather than waiting for you to nudge it each turn.
 
-4. **Start the supervisor** (optional, recommended): graphkit schedules `supervisor.md` at your interval.
+4. **Start the supervisor** (optional, recommended): graphkit schedules `supervisor.md` at your interval — in Claude Code via cron, otherwise a fresh session each interval.
 
 Without Claude Code, fill in `templates/` by hand — the method does not depend on the runtime.
 
@@ -135,6 +135,7 @@ Each run gets a fresh `.graphkit/<date-slug>/` in your repo:
 | `directives.md` | the supervisor, one-way | Corrections, read by the executor each round. You can append your own. |
 | `ops.md` | any node, append-only | Durable environment, build and data facts. |
 | `supervisor.md` | generated once | The supervisor prompt; scheduled automatically in Claude Code. |
+| `LAUNCH.md` | generated once | Copy-paste launch snippets for the chosen hosts (Grok `/goal`, cron, paste). A convenience index, not a scoreboard. |
 
 ## When to use it
 
