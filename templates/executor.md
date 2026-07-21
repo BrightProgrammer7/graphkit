@@ -39,10 +39,10 @@ Execution philosophy: implement first, verify immediately — within one round, 
 
 ## Every-round cadence
 
-1. Read `{{LEDGER_PATH}}` and `{{DIRECTIVES_PATH|directives.md}}`; pick **the single smallest unclosed item** in the current milestone (open directives first). One item per round.
+1. Read `{{LEDGER_PATH}}` and `{{DIRECTIVES_PATH|directives.md}}`. **First check the status-header Convergence tracker: if it flags `next round converges: yes`, this round is a forced convergence round (step 4).** Otherwise pick **the single smallest unclosed item** in the current milestone (open directives first). One item per round.
 2. Implement → verify the same round with the narrowest test/gate/smoke for that item → update the ledger (scoreboard, net line count, metric snapshot).
 3. Run gates: {{GATE_COMMANDS — exact per-repo commands, e.g. `make lint && make test` / `mvn -s <settings> -pl <mod> test` / `pnpm build && tsc --noEmit`}}. If a gate is red, the next round may only fix the gate.
-4. **Every {{CONVERGE_EVERY|default 5}}th round is a forced convergence round**: zero new features — only delete dead code, merge duplication, tighten interfaces; net lines ≤ 0.
+4. **Convergence is tracked in the ledger, never counted in your head.** Every round, update the Convergence tracker in the status header: +1 to `rounds since last`, add this round's net lines to `net since last`. It flips **`next round converges: yes`** the moment either bound is crossed — {{CONVERGE_EVERY|default 5}} rounds since the last convergence **or** > {{NET_LINE_CAP|default 400}} net production lines accumulated since it, whichever comes first. A convergence round adds **zero new features** — only delete dead code, merge duplication, tighten interfaces; net lines ≤ 0 — and on finishing it, **reset the tracker** to `0 rounds / +0 net`, flag back to `no`.
 
 ## You are a loop — one round per iteration, and you end the loop when done
 
@@ -61,7 +61,7 @@ Any full-cohort / bulk operation — eval over the whole set, bulk VLM/API sweep
 - Before adding any endpoint / module / protocol / config / thread pool / cache, register its **real consumer** in the ledger. No consumer → don't build it.
 - Forbidden: compatibility double-paths, v1/v2 coexistence, "might need it later" abstractions, parallel error systems, second delivery channels, reviving removed components, swapping frameworks / adding large deps (except the minimal dep needed to compile).
 - Second occurrence of the same logic → collapse to one owner; never a third copy.
-- A round adding > {{NET_LINE_CAP|default 400}} net production lines forces the next round to converge.
+- Net production lines accumulate in the ledger's Convergence tracker; crossing > {{NET_LINE_CAP|default 400}} since the last convergence flips the next round to a convergence round (cadence step 4) — no separate bookkeeping.
 - Tests exist for real risk only — not for coverage/case-count targets; delete tests for deleted features the same round.
 
 ## Found a gap? Register, don't fix-on-the-side, don't ignore

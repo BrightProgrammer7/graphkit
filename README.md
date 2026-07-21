@@ -44,7 +44,7 @@ The nodes communicate only through inspectable state — a ledger, a git tree, a
 
 - **One scoreboard.** `ledger.md` is the single source of truth. When code, docs and ledger disagree, the ledger is fixed first.
 - **One item per round**, verified the same round, then logged. No batching, no deferred testing.
-- **Forced convergence.** Every 5th round adds no features — it deletes dead code and tightens interfaces (net lines ≤ 0). A round adding over 400 net lines forces the next into convergence.
+- **Forced convergence, tracked in the ledger.** A convergence round — no new features, net lines ≤ 0 — fires on whichever comes first: every Nth round (default 5) or once accumulated net lines cross the cap (default 400). The trigger is an explicit flag in the scoreboard, not a modulo the stateless loop must recompute, so it can't be silently skipped — and the supervisor audits that it happened.
 - **Register-then-defer.** Gaps found mid-round are logged, not silently patched or ignored.
 - **Red lines that halt the run.** No unauthorized push, no destructive git on others' work, no secrets in commits, frozen contracts stay frozen, metrics never regress.
 - **Independent acceptance audit.** The supervisor re-verifies claimed-done work from its clean context — re-running the gates and checking the real diff against the acceptance bar and the shared standards (`ops.md`, `AGENTS.md`/`CLAUDE.md`) — and corrects drift, fake-done, wasteful method, or a stale plan only through the directives file. It never edits the ledger and never shares the executor's context. It commits what passes and decides by default; only a short owner-only list escalates to you.
@@ -150,7 +150,7 @@ Use it when the task spans many rounds, success is verifiable (tests, gates, met
 
 **Does it require Claude Code?** The skill packaging and supervisor scheduling are Claude Code features, but the nodes and edges are plain Markdown — the method is agent-agnostic. The intended setup is mixed: author the graph once with a strong model, then run the executor on whatever agent is cheapest.
 
-**Isn't a fixed 5th-round convergence arbitrary?** It's a default; the interview lets you tune the interval and the net-line cap. What matters is that a forcing function exists, not the exact number.
+**Isn't a fixed 5th-round convergence arbitrary?** It's a default, and it isn't purely fixed: convergence fires on whichever comes first — N rounds *or* accumulated net lines over the cap — so a bloat-heavy stretch converges sooner and a quiet one doesn't waste a round. Both bounds are tuned to the plan at generation. It's also tracked as an explicit flag in the ledger (not a modulo the loop recomputes), so it actually triggers. What matters is that a forcing function exists and reliably fires, not the exact number.
 
 **Can a node commit or push on its own?** Only if you authorize it in the interview. The safe default: the executor implements and verifies, commits are a separate authorized step (often the supervisor's), and push is never automatic.
 
